@@ -1,0 +1,10 @@
+name: TownyRecords
+version: 1.2.1
+api-version: 1.19
+author: DunnoConz
+main: dev.DunnoConz.TownyRecords.Main
+
+commands:
+   recorder:
+      description: Used to record text channels!
+      usage: "Usage: /recorder [start|end]"
