@@ -1,8 +1,8 @@
 package dev.DunnoConz.TownyRecords;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -17,14 +17,58 @@ import com.palmergames.bukkit.TownyChat.Chat;
 import com.palmergames.bukkit.TownyChat.channels.Channel;
 
 public class Main extends JavaPlugin implements Listener {
-	Logger log = Bukkit.getServer().getLogger();
-	private static HashMap<Channel, HashMap<Number, String>> Recorder;
+	private Map<Player, Recorder> PlayerRecorders;
+	private Map<Channel, ArrayList<Recorder>> RecorderList;
+
+	
+	public void StartRecord(Player player) {
+		final Channel channel = Chat.getTownyChat().getPlayerChannel(player);
+		Recorder recorder = new Recorder();
+		
+		PlayerRecorders.put(player, recorder);
+		
+		if (RecorderList.get(channel) == null){
+			ArrayList<Recorder> newArray = new ArrayList<Recorder>();
+			RecorderList.put(channel, newArray);
+		}
+		RecorderList.get(channel).add(recorder);
+		
+		return;
+	}
+	
+	public void EndRecord(Player player) {
+		final Channel channel = Chat.getTownyChat().getPlayerChannel(player);
+		
+		Recorder recorder = PlayerRecorders.get(player);
+		
+		RecorderList.get(channel).remove(recorder);
+		PlayerRecorders.remove(player);
+		
+		// temp stuff until upload is possible
+		ArrayList<String> finalData = recorder.Complete(true);
+		
+		for (String message: finalData) {
+			player.sendMessage(message);
+		}
+	}
+	
+	private void Broadcast(Channel channel, String message) {
+		if (RecorderList.get(channel) == null){
+			ArrayList<Recorder> newArray = new ArrayList<Recorder>();
+			RecorderList.put(channel, newArray);
+		}
+		
+		for (Recorder recorder: RecorderList.get(channel)) {
+			recorder.Log(message);
+		}
+	}
 	
 	@Override
 	public void onEnable() {
-		Bukkit.getPluginManager().registerEvents(this, this);
+		PlayerRecorders = new HashMap<Player, Recorder>();
+		RecorderList = new HashMap<Channel, ArrayList<Recorder>>();
 		
-		Recorder = new HashMap<Channel, HashMap<Number, String>>();
+		Bukkit.getPluginManager().registerEvents( this, this);
 	}
 
 	@Override
@@ -33,33 +77,14 @@ public class Main extends JavaPlugin implements Listener {
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		if (sender instanceof Player) {
-			Player player = (Player) sender;
-			final Channel channel = Chat.getTownyChat().getPlayerChannel(player);
+		if (label.equalsIgnoreCase("recorder")) {
 			
-			if (label.equalsIgnoreCase("recorder") && args[0].equalsIgnoreCase("start")) {
-				Recorder.put(channel, new HashMap<Number, String>());
-				Recorder.get(channel).put(0, "START OF LOG");
-				player.sendMessage("Channel is being recorded!");
-				
+			if (args[0].equalsIgnoreCase("start")) {
+				StartRecord((Player) sender);
 				return true;
-			} else if (label.equalsIgnoreCase("recorder") && args[0].equalsIgnoreCase("end")) {
-				
-				if (Recorder.get(channel) != null) {
-					HashMap<Number, String> recorder = Recorder.get(channel);
-					
-					for (Map.Entry<Number, String> message : recorder.entrySet()) {
-						player.sendMessage("[" + message.getKey().toString() + "] " + message.getValue());
-					}
-					
-					Recorder.put(channel, null);
-				} else {
-					player.sendMessage("Channel is not currently being recorded...");
-					return false;
-				}
-				
+			} else if (args[0].equalsIgnoreCase("end")) {
+				EndRecord((Player) sender);
 				return true;
-				
 			}
 		}
 		return false;
@@ -68,12 +93,11 @@ public class Main extends JavaPlugin implements Listener {
 	@EventHandler
 	public void onChat(AsyncPlayerChatEvent event) {
 		final Channel channel = Chat.getTownyChat().getPlayerChannel(event.getPlayer());
-		log.warning(event.getPlayer().getDisplayName() + " just chatted in " + channel);
+		event.getPlayer().sendMessage(event.getMessage());
 		
-		if (Recorder.get(channel) != null) {
-			HashMap<Number, String> recorder = Recorder.get(channel);
-			
-			recorder.put(System.currentTimeMillis(), event.getPlayer().getDisplayName() + " said " + event.getMessage());
+		if (RecorderList.get(channel) != null && RecorderList.get(channel).size() != 0) {
+			Broadcast(channel, "[" + System.currentTimeMillis() + "] " + event.getPlayer().getDisplayName() + " said " + event.getMessage());
 		}
+		return;
 	}
 }
