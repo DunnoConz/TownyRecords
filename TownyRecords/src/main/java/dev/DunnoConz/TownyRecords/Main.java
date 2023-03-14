@@ -3,6 +3,7 @@ package dev.DunnoConz.TownyRecords;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -19,6 +20,8 @@ import com.palmergames.bukkit.TownyChat.Chat;
 import com.palmergames.bukkit.TownyChat.channels.Channel;
 
 public class Main extends JavaPlugin implements Listener {
+	private Logger logger = Bukkit.getLogger();
+	
 	private Map<Player, Recorder> PlayerRecorders;
 	private Map<Channel, ArrayList<Recorder>> RecorderList;
 
@@ -95,7 +98,6 @@ public class Main extends JavaPlugin implements Listener {
 	@EventHandler
 	public void onChat(AsyncPlayerChatEvent event) {
 		final Channel channel = Chat.getTownyChat().getPlayerChannel(event.getPlayer());
-		event.getPlayer().sendMessage(event.getMessage());
 		
 		if (RecorderList.get(channel) != null && RecorderList.get(channel).size() != 0) {
 			Broadcast(channel, "[" + System.currentTimeMillis() + "] " + event.getPlayer().getDisplayName() + " said " + event.getMessage());
@@ -111,6 +113,7 @@ public class Main extends JavaPlugin implements Listener {
 		Recorder recorder = PlayerRecorders.get(player);
 		
 		if (recorder != null) {
+			logger.warning("Recording was not ended properly!");
 			RecorderList.get(channel).remove(recorder);
 			PlayerRecorders.remove(player);
 		}
@@ -124,6 +127,7 @@ public class Main extends JavaPlugin implements Listener {
 		Recorder recorder = PlayerRecorders.get(player);
 		
 		if (recorder != null) {
+			logger.warning("Recording was not ended properly!");
 			RecorderList.get(channel).remove(recorder);
 			PlayerRecorders.remove(player);
 		}
