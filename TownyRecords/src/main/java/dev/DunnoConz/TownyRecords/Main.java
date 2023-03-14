@@ -11,6 +11,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerKickEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.palmergames.bukkit.TownyChat.Chat;
@@ -99,5 +101,31 @@ public class Main extends JavaPlugin implements Listener {
 			Broadcast(channel, "[" + System.currentTimeMillis() + "] " + event.getPlayer().getDisplayName() + " said " + event.getMessage());
 		}
 		return;
+	}
+	
+	@EventHandler 
+	public void onPlayerQuit(PlayerQuitEvent event) {
+		Player player = event.getPlayer();
+		
+		final Channel channel = Chat.getTownyChat().getPlayerChannel(player);
+		Recorder recorder = PlayerRecorders.get(player);
+		
+		if (recorder != null) {
+			RecorderList.get(channel).remove(recorder);
+			PlayerRecorders.remove(player);
+		}
+	}
+	
+	@EventHandler
+	public void onPlayerKick(PlayerKickEvent event) {
+		Player player = event.getPlayer();
+		
+		final Channel channel = Chat.getTownyChat().getPlayerChannel(player);
+		Recorder recorder = PlayerRecorders.get(player);
+		
+		if (recorder != null) {
+			RecorderList.get(channel).remove(recorder);
+			PlayerRecorders.remove(player);
+		}
 	}
 }
